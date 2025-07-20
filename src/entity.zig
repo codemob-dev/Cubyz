@@ -81,6 +81,12 @@ pub const ClientEntity = struct {
 	}
 };
 
+pub const EntityRenderData = struct {
+	pos: Vec3d,
+	renderPos: Vec3d,
+	rot: Vec3f,
+};
+
 pub const ClientEntityManager = struct {
 	var lastTime: i16 = 0;
 	var timeDifference: utils.TimeDifference = utils.TimeDifference{};
@@ -174,6 +180,34 @@ pub const ClientEntityManager = struct {
 		}
 	}
 
+	pub fn renderSingleEntity(ent: EntityRenderData, playerPos: Vec3d) void {
+		const blockPos: vec.Vec3i = @intFromFloat(@floor(ent.pos));
+		const lightVals: [6]u8 = main.renderer.mesh_storage.getLight(blockPos[0], blockPos[1], blockPos[2]) orelse @splat(0);
+		const light = (@as(u32, lightVals[0] >> 3) << 25 |
+			@as(u32, lightVals[1] >> 3) << 20 |
+			@as(u32, lightVals[2] >> 3) << 15 |
+			@as(u32, lightVals[3] >> 3) << 10 |
+			@as(u32, lightVals[4] >> 3) << 5 |
+			@as(u32, lightVals[5] >> 3) << 0);
+
+		c.glUniform1ui(uniforms.light, @bitCast(@as(u32, light)));
+
+		const pos: Vec3d = ent.renderPos - playerPos;
+		const modelMatrix = (Mat4f.identity()
+			.mul(Mat4f.translation(Vec3f{
+				@floatCast(pos[0]),
+				@floatCast(pos[1]),
+				@floatCast(pos[2] - 1.0 + 0.09375),
+			}))
+			.mul(Mat4f.rotationZ(-ent.rot[2]))
+			//.mul(Mat4f.rotationY(-ent.rot[1]))
+			//.mul(Mat4f.rotationX(-ent.rot[0]))
+		);
+		const modelViewMatrix = game.camera.viewMatrix.mul(modelMatrix);
+		c.glUniformMatrix4fv(uniforms.viewMatrix, 1, c.GL_TRUE, @ptrCast(&modelViewMatrix));
+		c.glDrawElements(c.GL_TRIANGLES, 6*modelSize, c.GL_UNSIGNED_INT, null);
+	}
+
 	pub fn render(projMatrix: Mat4f, ambientLight: Vec3f, playerPos: Vec3d) void {
 		mutex.lock();
 		defer mutex.unlock();
@@ -188,32 +222,23 @@ pub const ClientEntityManager = struct {
 		for(entities.items()) |ent| {
 			if(ent.id == game.Player.id) continue; // don't render local player
 
-			const blockPos: vec.Vec3i = @intFromFloat(@floor(ent.pos));
-			const lightVals: [6]u8 = main.renderer.mesh_storage.getLight(blockPos[0], blockPos[1], blockPos[2]) orelse @splat(0);
-			const light = (@as(u32, lightVals[0] >> 3) << 25 |
-				@as(u32, lightVals[1] >> 3) << 20 |
-				@as(u32, lightVals[2] >> 3) << 15 |
-				@as(u32, lightVals[3] >> 3) << 10 |
-				@as(u32, lightVals[4] >> 3) << 5 |
-				@as(u32, lightVals[5] >> 3) << 0);
+			const renderData = EntityRenderData{
+				.pos = ent.pos,
+				.renderPos = ent.getRenderPosition(),
+				.rot = ent.rot,
+			};
 
-			c.glUniform1ui(uniforms.light, @bitCast(@as(u32, light)));
-
-			const pos: Vec3d = ent.getRenderPosition() - playerPos;
-			const modelMatrix = (Mat4f.identity()
-				.mul(Mat4f.translation(Vec3f{
-					@floatCast(pos[0]),
-					@floatCast(pos[1]),
-					@floatCast(pos[2] - 1.0 + 0.09375),
-				}))
-				.mul(Mat4f.rotationZ(-ent.rot[2]))
-				//.mul(Mat4f.rotationY(-ent.rot[1]))
-				//.mul(Mat4f.rotationX(-ent.rot[0]))
-			);
-			const modelViewMatrix = game.camera.viewMatrix.mul(modelMatrix);
-			c.glUniformMatrix4fv(uniforms.viewMatrix, 1, c.GL_TRUE, @ptrCast(&modelViewMatrix));
-			c.glDrawElements(c.GL_TRIANGLES, 6*modelSize, c.GL_UNSIGNED_INT, null);
+			renderSingleEntity(renderData, playerPos);
 		}
+
+		var renderData = EntityRenderData {
+			.pos = game.Player.getPosBlocking(),
+			.renderPos = game.Player.getPosBlocking(),
+			.rot = game.camera.rotation,
+		};
+		renderData.renderPos += vec.rotateZ(Vec3d{0.0, -0.35, 0.0}, -game.camera.rotation[2]);
+		renderSingleEntity(renderData, playerPos);
+
 	}
 
 	pub fn addEntity(zon: ZonElement) void {
