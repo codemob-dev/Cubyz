@@ -207,8 +207,9 @@ const GenerationStructure = struct {
 		const x = wx +% relX*terrain.SurfaceMap.MapFragment.biomeSize;
 		const y = wy +% relY*terrain.SurfaceMap.MapFragment.biomeSize;
 		var closestDist = std.math.floatMax(f32);
-		var secondClosestDist = std.math.floatMax(f32);
-		var closestBiomePoint: BiomePoint = undefined;
+		var closestOtherBiomeDist = std.math.floatMax(f32);
+		var closestOtherBiomePoint: ?BiomePoint = undefined;
+		var closestBiomePoint: ?BiomePoint = undefined;
 		var height: f32 = 0;
 		var roughness: f32 = 0;
 		var hills: f32 = 0;
@@ -246,22 +247,37 @@ const GenerationStructure = struct {
 					totalWeight += weight;
 
 					if(dist < closestDist) {
-						secondClosestDist = closestDist;
+						if(closestBiomePoint) |oldClosest| {
+							if(oldClosest.biome != biomePoint.biome and closestDist < closestOtherBiomeDist) {
+								closestOtherBiomePoint = closestBiomePoint;
+								closestOtherBiomeDist = closestDist;
+							}
+						}
 						closestDist = dist;
 						closestBiomePoint = biomePoint;
+					} else if(dist < closestOtherBiomeDist) {
+						if(biomePoint.biome != closestBiomePoint.?.biome) {
+							closestOtherBiomePoint = biomePoint;
+							closestOtherBiomeDist = dist;
+						}
 					}
 				}
 			}
 		}
 		std.debug.assert(totalWeight > 0);
 		std.debug.assert(closestDist != std.math.floatMax(f32));
+		var customNoiseMapStrength: f32 = closestBiomePoint.?.biome.customNoiseMapStrength;
+		if(closestOtherBiomePoint != null) {
+			customNoiseMapStrength *= @abs(closestDist - closestOtherBiomeDist) / (closestDist + closestOtherBiomeDist);
+		}
 		return .{
-			.biome = closestBiomePoint.biome,
+			.biome = closestBiomePoint.?.biome,
 			.height = height/totalWeight,
 			.roughness = roughness/totalWeight,
 			.hills = hills/totalWeight,
 			.mountains = mountains/totalWeight,
-			.seed = random.initSeed2D(worldSeed, closestBiomePoint.pos),
+			.customNoiseMapStrength = customNoiseMapStrength,
+			.seed = random.initSeed2D(worldSeed, closestBiomePoint.?.pos),
 		};
 	}
 
@@ -299,6 +315,7 @@ const GenerationStructure = struct {
 						.hills = std.math.lerp(biome.hills, entry.hills, biome.keepOriginalTerrain),
 						.mountains = std.math.lerp(biome.mountains, entry.mountains, biome.keepOriginalTerrain),
 						.height = std.math.lerp(newHeight, entry.height, biome.keepOriginalTerrain),
+						.customNoiseMapStrength = std.math.lerp(biome.customNoiseMapStrength, entry.customNoiseMapStrength, biome.keepOriginalTerrain),
 						.seed = entry.seed,
 					};
 				}
@@ -385,6 +402,7 @@ const GenerationStructure = struct {
 								.hills = std.math.lerp(transitionBiome.biome.hills, map[x][y].hills, transitionBiome.biome.keepOriginalTerrain),
 								.mountains = std.math.lerp(transitionBiome.biome.mountains, map[x][y].mountains, transitionBiome.biome.keepOriginalTerrain),
 								.height = std.math.lerp(newHeight, map[x][y].height, transitionBiome.biome.keepOriginalTerrain),
+								.customNoiseMapStrength = std.math.lerp(transitionBiome.biome.customNoiseMapStrength, map[x][y].customNoiseMapStrength, transitionBiome.biome.keepOriginalTerrain),
 								.seed = map[x][y].seed,
 							};
 							break;

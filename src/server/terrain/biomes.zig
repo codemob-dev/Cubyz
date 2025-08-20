@@ -9,7 +9,7 @@ const NeverFailingAllocator = main.heap.NeverFailingAllocator;
 const vec = @import("main.vec");
 const Vec3f = main.vec.Vec3f;
 const Vec3d = main.vec.Vec3d;
-
+const custom_noise_maps = @import("../../custom_noise_maps.zig");
 pub const SimpleStructureModel = struct { // MARK: SimpleStructureModel
 	pub const GenerationMode = enum {
 		floor,
@@ -311,10 +311,19 @@ pub const Biome = struct { // MARK: Biome
 	preferredMusic: []const u8, // TODO: Support multiple possibilities that are chosen based on time and danger.
 	isValidPlayerSpawn: bool,
 	chance: f32,
+	customNoiseMap: ?*custom_noise_maps.NoiseMap,
+	customNoiseMapStrength: f32,
 
 	pub fn init(self: *Biome, id: []const u8, paletteId: u32, zon: ZonElement) void {
 		const minRadius = zon.get(f32, "radius", zon.get(f32, "minRadius", 256));
 		const maxRadius = zon.get(f32, "maxRadius", minRadius);
+		var noiseMap: ?*custom_noise_maps.NoiseMap = null;
+		if(zon.get(?[]const u8, "customNoiseMap", null))|mapId| {
+			noiseMap = custom_noise_maps.getMap(mapId);
+			if(noiseMap == null) {
+				std.log.err("Unknown noise map .{s}, ignoring.", .{mapId});
+			}
+		}
 		self.* = Biome{
 			.id = main.globalAllocator.dupe(u8, id),
 			.paletteId = paletteId,
@@ -344,9 +353,14 @@ pub const Biome = struct { // MARK: Biome
 			.isValidPlayerSpawn = zon.get(bool, "validPlayerSpawn", false),
 			.chance = zon.get(f32, "chance", if(zon == .null) 0 else 1),
 			.maxSubBiomeCount = zon.get(f32, "maxSubBiomeCount", std.math.floatMax(f32)),
+			.customNoiseMap = noiseMap,
+			.customNoiseMapStrength = zon.get(f32, "customNoiseMapStrength", 0)
 		};
 		if(self.minHeight > self.maxHeight) {
 			std.log.err("Biome {s} has invalid height range ({}, {})", .{self.id, self.minHeight, self.maxHeight});
+		}
+		if(self.customNoiseMap == null and self.customNoiseMapStrength != 0) {
+			std.log.err("Biome {s} uses customNoiseMapStrength without customNoiseMap", .{self.id});
 		}
 		const parentBiomeList = zon.getChild("parentBiomes");
 		for(parentBiomeList.toSlice()) |parent| {

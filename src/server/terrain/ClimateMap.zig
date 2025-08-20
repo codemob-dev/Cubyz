@@ -17,6 +17,7 @@ pub const BiomeSample = struct {
 	roughness: f32,
 	hills: f32,
 	mountains: f32,
+	customNoiseMapStrength: f32,
 	seed: u64,
 };
 

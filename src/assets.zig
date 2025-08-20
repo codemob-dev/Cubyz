@@ -14,6 +14,7 @@ const NeverFailingAllocator = main.heap.NeverFailingAllocator;
 const NeverFailingArenaAllocator = main.heap.NeverFailingArenaAllocator;
 const ListUnmanaged = main.ListUnmanaged;
 const files = main.files;
+const custom_noise_maps_zig = @import("custom_noise_maps.zig");
 
 var commonAssetArena: NeverFailingArenaAllocator = undefined;
 var commonAssetAllocator: NeverFailingAllocator = undefined;
@@ -325,6 +326,7 @@ pub fn init() void {
 	biomes_zig.init();
 	blocks_zig.init();
 	migrations_zig.init();
+	custom_noise_maps_zig.init();
 
 	commonAssetArena = .init(main.globalAllocator);
 	commonAssetAllocator = commonAssetArena.allocator();
@@ -688,4 +690,5 @@ pub fn deinit() void {
 	biomes_zig.deinit();
 	blocks_zig.deinit();
 	migrations_zig.deinit();
+	custom_noise_maps_zig.deinit();
 }

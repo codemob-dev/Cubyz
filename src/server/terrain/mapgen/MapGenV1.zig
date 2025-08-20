@@ -88,6 +88,7 @@ pub fn generateMapFragment(map: *MapFragment, worldSeed: u64) void {
 			var roughness: f32 = 0;
 			var hills: f32 = 0;
 			var mountains: f32 = 0;
+			var customNoiseMapStrength: f32 = 0;
 			const wx: f32 = @floatFromInt(x*map.pos.voxelSize + map.pos.wx);
 			const wy: f32 = @floatFromInt(y*map.pos.voxelSize + map.pos.wy);
 			const offsetX = (xOffsetMap.get(x, y) - 0.5)*offsetScale;
@@ -142,11 +143,15 @@ pub fn generateMapFragment(map: *MapFragment, worldSeed: u64) void {
 					roughness += biomeSample.roughness*weight;
 					hills += biomeSample.hills*weight;
 					mountains += biomeSample.mountains*weight;
+					customNoiseMapStrength += biomeSample.customNoiseMapStrength*weight;
 				}
 			}
 			height += (roughMap.get(x, y) - 0.5)*2*roughness;
 			height += (hillMap.get(x, y) - 0.5)*2*hills;
 			height += (mountainMap.get(x, y) - 0.5)*2*mountains;
+			if(closestBiome.customNoiseMap) |noiseMap| {
+				height += (noiseMap.valueAt(x*map.pos.voxelSize + map.pos.wx, y*map.pos.voxelSize + map.pos.wy) - 0.5)*2*customNoiseMapStrength;
+			}
 			map.heightMap[x][y] = @intFromFloat(height);
 			map.minHeight = @min(map.minHeight, @as(i32, @intFromFloat(height)));
 			map.minHeight = @max(map.minHeight, 0);

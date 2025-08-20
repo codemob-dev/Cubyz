@@ -5,6 +5,8 @@
 	.minRadius = 256,
 	.maxRadius = 320,
 	.roughness = 1,
+	.customNoiseMap = "cubyz:test",
+	.customNoiseMapStrength = 20,
 	.hills = 3,
 	.music = "cubyz:sunrise",
 	.validPlayerSpawn = true,
