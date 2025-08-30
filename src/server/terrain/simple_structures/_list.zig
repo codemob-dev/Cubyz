@@ -1,4 +1,5 @@
 pub const Boulder = @import("Boulder.zig");
+pub const Arch = @import("Arch.zig");
 pub const FallenTree = @import("FallenTree.zig");
 pub const FlowerPatch = @import("FlowerPatch.zig");
 pub const GroundPatch = @import("GroundPatch.zig");
