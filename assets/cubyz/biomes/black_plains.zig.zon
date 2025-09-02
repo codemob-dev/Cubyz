@@ -11,6 +11,8 @@
 	.mountains = 2,
     .hills = 20,
     .roughness = 5,
+	.fogColor = 0x888888,
+    .fogDensity = 30,
 	.validPlayerSpawn = false,
 	.music = "cubyz:DarkTimes",
     .stoneBlock = "cubyz:basalt",
