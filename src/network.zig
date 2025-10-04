@@ -710,8 +710,9 @@ pub const Protocols = struct {
 					},
 					.assets => {
 						std.log.info("Received assets.", .{});
-						main.files.cwd().deleteTree("serverAssets") catch {}; // Delete old assets.
-						var dir = try main.files.cwd().openDir("serverAssets");
+						main.files.cwd().deleteTree("serverAssets") catch {}; // Delete the assets created before migration
+						main.files.cubyzDir().deleteTree("serverAssets") catch {}; // Delete old assets.
+						var dir = try main.files.cubyzDir().openDir("serverAssets");
 						defer dir.close();
 						try utils.Compression.unpack(dir, reader.remaining);
 					},
@@ -1165,7 +1166,7 @@ pub const Protocols = struct {
 		}
 
 		pub fn send(conn: *Connection, msg: []const u8) void {
-			conn.send(.fast, id, msg);
+			conn.send(.lossy, id, msg);
 		}
 	};
 	pub const lightMapRequest = struct {
