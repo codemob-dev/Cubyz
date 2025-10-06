@@ -2270,8 +2270,10 @@ pub fn update(deltaTime: f64) void { // MARK: update()
 				movementSpeed = @max(movementSpeed, walkingSpeed);
 				movementDir[2] -= walkingSpeed;
 			}
+		}
+
+		if(KeyBoard.key("textNewline").pressed) {
 			if(i < 1363) {
-				particles.ParticleSystem.update(@floatCast(deltaTime));
 				chat.input.currentString.replaceRange(0, chat.input.currentString.items.len, script[i]);
 				i += 1;
 				chat.sendMessage(0);
@@ -2359,4 +2361,5 @@ pub fn update(deltaTime: f64) void { // MARK: update()
 	biomeFog.fogHigher = (biome.fogHigher - biomeFog.fogHigher)*t + biomeFog.fogHigher;
 
 	world.?.update();
+	particles.ParticleSystem.update(@floatCast(deltaTime));
 }
