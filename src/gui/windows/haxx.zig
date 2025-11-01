@@ -44,6 +44,11 @@ fn cubeezusCallback(newValue: bool) void {
 	settings.save();
 }
 
+fn noDamageCallback(newValue: bool) void {
+	settings.noDamage = newValue;
+	settings.save();
+}
+
 fn gravityFormatter(allocator: main.heap.NeverFailingAllocator, value: f32) []const u8 {
 	return std.fmt.allocPrint(allocator.allocator, "#ffffffGravity multiplier: {d:.2}", .{@exp2(value)}) catch unreachable;
 }
@@ -54,6 +59,7 @@ pub fn onOpen() void {
 	list.add(ContinuousSlider.init(.{0, 0}, 128, -10.0, 4.0, @log2(settings.gravity), &gravityCallback, &gravityFormatter));
 	list.add(CheckBox.init(.{0, 0}, 128, "Infinite reach", main.settings.infiniteReach, &infiniteReachCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "Cubeezus", main.settings.cubeezus, &cubeezusCallback));
+	list.add(CheckBox.init(.{0, 0}, 128, "No Damage", main.settings.noDamage, &noDamageCallback));
 	list.finish(.center);
 	window.rootComponent = list.toComponent();
 	window.contentSize = window.rootComponent.?.pos() + window.rootComponent.?.size() + @as(Vec2f, @splat(padding));

@@ -500,6 +500,7 @@ pub const Sync = struct { // MARK: Sync
 	};
 
 	pub fn addHealth(health: f32, cause: main.game.DamageType, side: Side, userId: u32) void {
+		if(main.settings.noDamage) return;
 		if(side == .client) {
 			Sync.ClientSide.executeCommand(.{.addHealth = .{.target = userId, .health = health, .cause = cause}});
 		} else {
