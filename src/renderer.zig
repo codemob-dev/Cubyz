@@ -932,7 +932,7 @@ pub const MeshSelection = struct { // MARK: MeshSelection
 				}
 				const relativePlayerPos: Vec3f = @floatCast(pos - @as(Vec3d, @floatFromInt(voxelPos)));
 				if(block.mode().rayIntersection(block, voxelPos, item, relativePlayerPos, _dir)) |intersection| {
-					if(intersection.distance <= closestDistance) {
+					if(settings.infiniteReach or intersection.distance <= closestDistance) {
 						selectedBlockPos = voxelPos;
 						selectionMin = intersection.min;
 						selectionMax = intersection.max;
