@@ -80,6 +80,8 @@ pub var infiniteReach: bool = false;
 
 pub var cubeezus: bool = false;
 
+pub var noDamage: bool = false;
+
 const settingsFile = if(builtin.mode == .Debug) "debug_settings.zig.zon" else "settings.zig.zon";
 
 pub fn init() void {

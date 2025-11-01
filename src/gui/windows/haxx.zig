@@ -45,13 +45,14 @@ fn cubeezusCallback(newValue: bool) void {
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> c6105f09 (haxxier haxxes)
 fn noDamageCallback(newValue: bool) void {
 	settings.noDamage = newValue;
 	settings.save();
 }
 
-=======
->>>>>>> 613dbb10 (More funnies)
 fn gravityFormatter(allocator: main.heap.NeverFailingAllocator, value: f32) []const u8 {
 	return std.fmt.allocPrint(allocator.allocator, "#ffffffGravity multiplier: {d:.2}", .{@exp2(value)}) catch unreachable;
 }
