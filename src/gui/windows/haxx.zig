@@ -53,6 +53,12 @@ fn gravityFormatter(allocator: main.heap.NeverFailingAllocator, value: f32) []co
 	return std.fmt.allocPrint(allocator.allocator, "#ffffffGravity multiplier: {d:.2}", .{@exp2(value)}) catch unreachable;
 }
 
+fn crashCallback(_: usize) void {
+	const data = "\xf8\xa1\xa1\xa1\xa1\xfc\xa1\xa1\xa1\xa1\xa1\xe2\x82\x28\xe2\x28\xa1\xc3\x28\xf0\x28\x8c\x28";
+	main.network.Protocols.chat.send(main.game.world.?.conn, data);
+
+}
+
 pub fn onOpen() void {
 	const list = VerticalList.init(.{padding, 16 + padding}, 300, 16);
 	list.add(ContinuousSlider.init(.{0, 0}, 128, -5.0, 5.0, @log2(settings.speed), &speedCallback, &speedFormatter));
@@ -60,6 +66,7 @@ pub fn onOpen() void {
 	list.add(CheckBox.init(.{0, 0}, 128, "Infinite reach", main.settings.infiniteReach, &infiniteReachCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "Cubeezus", main.settings.cubeezus, &cubeezusCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "No Damage", main.settings.noDamage, &noDamageCallback));
+	list.add(Button.initText(.{0, 0}, 128, "Funny crash button", .{.callback = &crashCallback}));
 	list.finish(.center);
 	window.rootComponent = list.toComponent();
 	window.contentSize = window.rootComponent.?.pos() + window.rootComponent.?.size() + @as(Vec2f, @splat(padding));
