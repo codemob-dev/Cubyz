@@ -51,7 +51,7 @@ fn gravityFormatter(allocator: main.heap.NeverFailingAllocator, value: f32) []co
 pub fn onOpen() void {
 	const list = VerticalList.init(.{padding, 16 + padding}, 300, 16);
 	list.add(ContinuousSlider.init(.{0, 0}, 128, -5.0, 5.0, @log2(settings.speed), &speedCallback, &speedFormatter));
-	list.add(ContinuousSlider.init(.{0, 0}, 128, -5.0, 5.0, @log2(settings.gravity), &gravityCallback, &gravityFormatter));
+	list.add(ContinuousSlider.init(.{0, 0}, 128, -10.0, 4.0, @log2(settings.gravity), &gravityCallback, &gravityFormatter));
 	list.add(CheckBox.init(.{0, 0}, 128, "Infinite reach", main.settings.infiniteReach, &infiniteReachCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "Cubeezus", main.settings.cubeezus, &cubeezusCallback));
 	list.finish(.center);
