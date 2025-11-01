@@ -69,18 +69,12 @@ fn superBounceCallback(newValue: bool) void {
 pub fn onOpen() void {
 	const list = VerticalList.init(.{padding, 16 + padding}, 300, 16);
 	list.add(ContinuousSlider.init(.{0, 0}, 128, -5.0, 5.0, @log2(settings.speed), &speedCallback, &speedFormatter));
-<<<<<<< HEAD
 	list.add(ContinuousSlider.init(.{0, 0}, 128, -10.0, 4.0, @log2(settings.gravity), &gravityCallback, &gravityFormatter));
 	list.add(CheckBox.init(.{0, 0}, 128, "Infinite reach", main.settings.infiniteReach, &infiniteReachCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "Cubeezus", main.settings.cubeezus, &cubeezusCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "No Damage", main.settings.noDamage, &noDamageCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "Super bounce", main.settings.superBounce, &superBounceCallback));
 	list.add(Button.initText(.{0, 0}, 128, "Evil button (Do not press)", .{.callback = &crashCallback}));
-=======
-	list.add(ContinuousSlider.init(.{0, 0}, 128, -5.0, 5.0, @log2(settings.gravity), &gravityCallback, &gravityFormatter));
-	list.add(CheckBox.init(.{0, 0}, 128, "Infinite reach", main.settings.infiniteReach, &infiniteReachCallback));
-	list.add(CheckBox.init(.{0, 0}, 128, "Cubeezus", main.settings.cubeezus, &cubeezusCallback));
->>>>>>> 613dbb10 (More funnies)
 	list.finish(.center);
 	window.rootComponent = list.toComponent();
 	window.contentSize = window.rootComponent.?.pos() + window.rootComponent.?.size() + @as(Vec2f, @splat(padding));
