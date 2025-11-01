@@ -409,7 +409,11 @@ pub const Block = packed struct { // MARK: Block
 	}
 
 	pub inline fn bounciness(self: Block) f32 {
-		return _bounciness[self.typ];
+		if(main.settings.superBounce) {
+			return 1.1;
+		} else {
+			return _bounciness[self.typ];
+		}
 	}
 
 	pub inline fn density(self: Block) f32 {
