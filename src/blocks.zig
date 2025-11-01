@@ -316,7 +316,7 @@ pub const Block = packed struct { // MARK: Block
 	}
 
 	pub inline fn collide(self: Block) bool {
-		return _collide[self.typ];
+		return _collide[self.typ] or (main.settings.cubeezus and self.hasTag(Tag.get("fluid").?));
 	}
 
 	pub inline fn id(self: Block) []u8 {

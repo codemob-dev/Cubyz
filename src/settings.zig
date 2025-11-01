@@ -68,6 +68,10 @@ pub var controllerAxisDeadzone: f32 = 0.0;
 
 pub var fancyChisel: bool = false;
 
+pub var infiniteReach: bool = false;
+
+pub var cubeezus: bool = false;
+
 const settingsFile = if(builtin.mode == .Debug) "debug_settings.zig.zon" else "settings.zig.zon";
 
 pub fn init() void {

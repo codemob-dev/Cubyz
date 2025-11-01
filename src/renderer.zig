@@ -923,7 +923,7 @@ pub const MeshSelection = struct { // MARK: MeshSelection
 
 		selectedBlockPos = null;
 
-		while(total_tMax < closestDistance) {
+		while(settings.infiniteReach or total_tMax < closestDistance) {
 			const block = mesh_storage.getBlockFromRenderThread(voxelPos[0], voxelPos[1], voxelPos[2]) orelse break;
 			if(block.typ != 0) blk: {
 				const fluidPlaceable = item != null and item.? == .baseItem and item.?.baseItem.hasTag(.fluidPlaceable);
