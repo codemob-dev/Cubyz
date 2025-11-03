@@ -49,6 +49,7 @@ const titleBarHeight = 18;
 const iconWidth = 18;
 
 pos: Vec2f = undefined,
+vel: Vec2f = .{0.0, 0.0},
 size: Vec2f = undefined,
 contentSize: Vec2f,
 scale: f32 = 1,
@@ -343,6 +344,28 @@ fn positionRelativeToConnectedWindow(self: *GuiWindow, other: *GuiWindow, compti
 }
 
 pub fn update(self: *GuiWindow) void {
+	if(self != grabbedWindow) {
+		const windowSize = main.Window.getWindowSize()/@as(Vec2f, @splat(gui.scale));
+		if(self.pos[0] < 0) {
+			self.pos[0] = 0;
+			self.vel[0] = @abs(self.vel[0]) * 0.85;
+		}
+		if(self.pos[1] < 0) {
+			self.pos[1] = 1;
+			self.vel[1] = @abs(self.vel[1]) * 0.85;
+		}
+		if(self.pos[0] + self.size[0] > windowSize[0]) {
+			self.pos[0] = windowSize[0] - self.size[0];
+			self.vel[0] = -@abs(self.vel[0]) * 0.85;
+		}
+		if(self.pos[1] + self.size[1] > windowSize[1]) {
+			self.pos[1] = windowSize[1] - self.size[1];
+			self.vel[1] = -@abs(self.vel[1]) * 0.85;
+		}
+		self.pos += self.vel;
+		self.vel += .{0.0, 0.1};
+		self.vel *= .{0.99, 0.99};
+	}
 	self.updateFn();
 }
 
@@ -352,7 +375,9 @@ pub fn updateSelected(self: *GuiWindow, mousePosition: Vec2f) void {
 	if(self == grabbedWindow and windowMoving and (gui.reorderWindows or self.showTitleBar)) if(grabPosition) |_grabPosition| {
 		self.relativePosition[0] = .{.ratio = undefined};
 		self.relativePosition[1] = .{.ratio = undefined};
+		const prevPos = self.pos;
 		self.pos = (mousePosition - _grabPosition) + selfPositionWhenGrabbed;
+		self.vel = self.pos - prevPos;
 		self.snapToOtherWindow();
 		if(self.relativePosition[0] == .ratio and self.relativePosition[1] == .ratio) {
 			self.positionRelativeToFrame();
