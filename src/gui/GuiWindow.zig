@@ -349,33 +349,33 @@ pub fn update(self: *GuiWindow) void {
 		if(self.pos[0] < 0) {
 			self.pos[0] = 0;
 			self.vel[0] = @abs(self.vel[0]) * 0.75;
-			if(@abs(self.vel[0]) < 0.5) {
+			if(@abs(self.vel[0]) < 0.1) {
 				self.vel[0] = 0.0;
 			}
 		}
 		if(self.pos[1] < 0) {
-			self.pos[1] = 1;
+			self.pos[1] = 0;
 			self.vel[1] = @abs(self.vel[1]) * 0.75;
-			if(@abs(self.vel[1]) < 0.5) {
+			if(@abs(self.vel[1]) < 0.1) {
 				self.vel[1] = 0.0;
 			}
 		}
 		if(self.pos[0] + self.size[0] > windowSize[0]) {
 			self.pos[0] = windowSize[0] - self.size[0];
 			self.vel[0] = -@abs(self.vel[0]) * 0.75;
-			if(@abs(self.vel[0]) < 0.5) {
+			if(@abs(self.vel[0]) < 0.1) {
 				self.vel[0] = 0.0;
 			}
 		}
 		if(self.pos[1] + self.size[1] > windowSize[1]) {
 			self.pos[1] = windowSize[1] - self.size[1];
 			self.vel[1] = -@abs(self.vel[1]) * 0.75;
-			if(@abs(self.vel[1]) < 0.5) {
+			if(@abs(self.vel[1]) < 0.1) {
 				self.vel[1] = 0.0;
 			}
 		}
 		self.pos += self.vel;
-		self.vel += .{0.0, 0.25};
+		self.vel += .{0.0, 0.1};
 		self.vel *= .{0.99, 0.99};
 	}
 	self.updateFn();
