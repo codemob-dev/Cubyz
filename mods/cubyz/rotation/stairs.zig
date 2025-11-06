@@ -281,7 +281,7 @@ fn segmentToBreak(comptime typ: enum {bit, intersection}, block: Block, pos: Vec
 					.{0, 0, corner[2]},
 					.{corner[0], corner[1], corner[2]},
 				};
-				const blockOffsetValues: [7]i32 = .{-1, -1, -1, 2, 2, 2, 0};
+				const blockOffsetValues: [7]i32 = .{-1, -1, -1, 3, 3, 3, 0};
 
 				var neighborValueTotal: i32 = 0;
 				for(blockOffsets, blockOffsetValues) |offset, value| {
@@ -292,7 +292,7 @@ fn segmentToBreak(comptime typ: enum {bit, intersection}, block: Block, pos: Vec
 					}
 				}
 
-				if(neighborValueTotal <= 0) {
+				if(neighborValueTotal <= 1) {
 					const fullModelIndex: ModelIndex = blocks.meshes.modelIndexStart(block);
 					if(RotationMode.DefaultFunctions.rayModelIntersection(fullModelIndex, pos, relativePlayerPos, playerDir)) |intersection| {
 						result = intersection;
