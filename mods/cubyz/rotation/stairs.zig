@@ -298,8 +298,8 @@ fn segmentToBreak(comptime typ: enum {bit, intersection}, block: Block, pos: Vec
 						resultBit = bit;
 						result.?.min = .{0.25, 0.25, 0.25};
 						result.?.max = .{0.75, 0.75, 0.75};
-						result.?.min += @as(Vec3f, @floatFromInt(corner)) + @as(Vec3f, @splat(0.25));
-						result.?.max += @as(Vec3f, @floatFromInt(corner)) + @as(Vec3f, @splat(0.25));
+						result.?.min += @as(Vec3f, @floatFromInt(corner))*@as(Vec3f, @splat(0.25));
+						result.?.max += @as(Vec3f, @floatFromInt(corner))*@as(Vec3f, @splat(0.25));
 						break;
 					}
 				}
