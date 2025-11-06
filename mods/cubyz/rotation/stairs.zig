@@ -292,7 +292,7 @@ fn segmentToBreak(comptime typ: enum {bit, intersection}, block: Block, pos: Vec
 					}
 				}
 
-				if(neighborValueTotal <= 1) {
+				if(neighborValueTotal < 3) {
 					const fullModelIndex: ModelIndex = blocks.meshes.modelIndexStart(block);
 					if(RotationMode.DefaultFunctions.rayModelIntersection(fullModelIndex, pos, relativePlayerPos, playerDir)) |intersection| {
 						result = intersection;
