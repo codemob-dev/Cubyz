@@ -52,10 +52,10 @@ pub const RotationMode = struct { // MARK: RotationMode
 		pub fn modifyBlock(_: *Block, _: u16) bool {
 			return false;
 		}
-		pub fn rayIntersection(block: Block, _: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult {
-			return rayModelIntersection(blocks.meshes.model(block), relativePlayerPos, playerDir);
+		pub fn rayIntersection(block: Block, pos: Vec3i, _: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult {
+			return rayModelIntersection(blocks.meshes.model(block), pos, relativePlayerPos, playerDir);
 		}
-		pub fn rayModelIntersection(modelIndex: ModelIndex, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult {
+		pub fn rayModelIntersection(modelIndex: ModelIndex, _: Vec3i, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult {
 			// Check the true bounding box (using this algorithm here: https://tavianator.com/2011/ray_box.html):
 			const invDir = @as(Vec3f, @splat(1))/playerDir;
 			const modelData = modelIndex.model();
@@ -91,7 +91,7 @@ pub const RotationMode = struct { // MARK: RotationMode
 			}
 			return null;
 		}
-		pub fn onBlockBreaking(_: ?main.items.Item, _: Vec3f, _: Vec3f, currentData: *Block) void {
+		pub fn onBlockBreaking(_: ?main.items.Item, _: Vec3i, _: Vec3f, _: Vec3f, currentData: *Block) void {
 			currentData.* = .{.typ = 0, .data = 0};
 		}
 		pub fn canBeChangedInto(oldBlock: Block, newBlock: Block, item: main.items.ItemStack, shouldDropSourceBlockOnSuccess: *bool) CanBeChangedInto {
@@ -156,9 +156,9 @@ pub const RotationMode = struct { // MARK: RotationMode
 
 	modifyBlock: *const fn(block: *Block, newType: u16) bool = DefaultFunctions.modifyBlock,
 
-	rayIntersection: *const fn(block: Block, item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult = &DefaultFunctions.rayIntersection,
+	rayIntersection: *const fn(block: Block, pos: Vec3i, item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult = &DefaultFunctions.rayIntersection,
 
-	onBlockBreaking: *const fn(item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f, currentData: *Block) void = &DefaultFunctions.onBlockBreaking,
+	onBlockBreaking: *const fn(item: ?main.items.Item, pos: Vec3i, relativePlayerPos: Vec3f, playerDir: Vec3f, currentData: *Block) void = &DefaultFunctions.onBlockBreaking,
 
 	canBeChangedInto: *const fn(oldBlock: Block, newBlock: Block, item: main.items.ItemStack, shouldDropSourceBlockOnSuccess: *bool) CanBeChangedInto = DefaultFunctions.canBeChangedInto,
 };

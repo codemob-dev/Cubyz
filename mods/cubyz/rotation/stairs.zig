@@ -15,11 +15,19 @@ const Vec2f = vec.Vec2f;
 const Vec3f = vec.Vec3f;
 const Vec3i = vec.Vec3i;
 const ZonElement = main.ZonElement;
+const mesh_storage = main.renderer.mesh_storage;
 
 var modelIndex: ?ModelIndex = null;
 
 fn subBlockMask(x: u1, y: u1, z: u1) u8 {
 	return @as(u8, 1) << ((@as(u3, x)*2 + @as(u3, y))*2 + z);
+}
+fn cornerDir(i: u3) Vec3i {
+	return .{
+		if((i & 4) != 0) 1 else -1,
+		if((i & 2) != 0) 1 else -1,
+		if((i & 1) != 0) 1 else -1,
+	};
 }
 fn hasSubBlock(stairData: u8, x: u1, y: u1, z: u1) bool {
 	return stairData & subBlockMask(x, y, z) == 0;
@@ -254,16 +262,54 @@ pub fn generateData(_: *main.game.World, _: Vec3i, _: Vec3f, _: Vec3f, _: Vec3i,
 	return false;
 }
 
-fn closestRay(comptime typ: enum {bit, intersection}, block: Block, relativePlayerPos: Vec3f, playerDir: Vec3f) if(typ == .intersection) ?RayIntersectionResult else u16 {
+
+
+fn segmentToBreak(comptime typ: enum {bit, intersection}, block: Block, pos: Vec3i, relativePlayerPos: Vec3f, playerDir: Vec3f) if(typ == .intersection) ?RayIntersectionResult else u16 {
 	var result: ?RayIntersectionResult = null;
 	var resultBit: u16 = 0;
-	for([_]u16{1, 2, 4, 8, 16, 32, 64, 128}) |bit| {
+	for(0..8) |i| {
+		const bit = @as(u16, 1) << @intCast(i);
 		if(block.data & bit == 0) {
-			const cornerModelIndex: ModelIndex = blocks.meshes.modelIndexStart(block).add(255 ^ bit);
-			if(RotationMode.DefaultFunctions.rayModelIntersection(cornerModelIndex, relativePlayerPos, playerDir)) |intersection| {
-				if(result == null or intersection.distance < result.?.distance) {
-					result = intersection;
-					resultBit = bit;
+			if(main.settings.fancyChisel) {
+				const corner = cornerDir(@intCast(i));
+				const blockOffsets: [7]Vec3i = .{
+					.{0, corner[1], corner[2]},
+					.{corner[0], 0, corner[2]},
+					.{corner[0], corner[1], 0},
+					.{corner[0], 0, 0},
+					.{0, corner[1], 0},
+					.{corner[0], 0, 0},
+					.{corner[0], corner[1], corner[2]},
+				};
+
+				var neighborBlocks: u32 = 0;
+				for(blockOffsets) |offset| {
+					const blockPos = pos + offset;
+					const otherBlock = mesh_storage.getBlockFromRenderThread(blockPos[0], blockPos[1], blockPos[2]) orelse continue;
+					if(otherBlock.collide()) {
+						neighborBlocks += 1;
+					}
+				}
+
+				if(neighborBlocks <= 4) {
+					const fullModelIndex: ModelIndex = blocks.meshes.modelIndexStart(block);
+					if(RotationMode.DefaultFunctions.rayModelIntersection(fullModelIndex, pos, relativePlayerPos, playerDir)) |intersection| {
+						result = intersection;
+						resultBit = bit;
+						result.?.min = .{0.25, 0.25, 0.25};
+						result.?.max = .{0.75, 0.75, 0.75};
+						result.?.min += @as(Vec3f, @floatFromInt(corner)) + @as(Vec3f, @splat(0.25));
+						result.?.max += @as(Vec3f, @floatFromInt(corner)) + @as(Vec3f, @splat(0.25));
+						break;
+					}
+				}
+			} else {
+				const cornerModelIndex: ModelIndex = blocks.meshes.modelIndexStart(block).add(255 ^ bit);
+				if(RotationMode.DefaultFunctions.rayModelIntersection(cornerModelIndex, pos, relativePlayerPos, playerDir)) |intersection| {
+					if(result == null or intersection.distance < result.?.distance) {
+						result = intersection;
+						resultBit = bit;
+					}
 				}
 			}
 		}
@@ -272,26 +318,26 @@ fn closestRay(comptime typ: enum {bit, intersection}, block: Block, relativePlay
 	return result;
 }
 
-pub fn rayIntersection(block: Block, item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult {
+pub fn rayIntersection(block: Block, pos: Vec3i, item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult {
 	if(item) |_item| {
 		switch(_item) {
 			.baseItem => |baseItem| {
 				if(std.mem.eql(u8, baseItem.id(), "cubyz:chisel")) { // Select only one eighth of a block
-					return closestRay(.intersection, block, relativePlayerPos, playerDir);
+					return segmentToBreak(.intersection, block, pos, relativePlayerPos, playerDir);
 				}
 			},
 			else => {},
 		}
 	}
-	return RotationMode.DefaultFunctions.rayIntersection(block, item, relativePlayerPos, playerDir);
+	return RotationMode.DefaultFunctions.rayIntersection(block, pos, item, relativePlayerPos, playerDir);
 }
 
-pub fn onBlockBreaking(item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f, currentData: *Block) void {
+pub fn onBlockBreaking(item: ?main.items.Item, pos: Vec3i, relativePlayerPos: Vec3f, playerDir: Vec3f, currentData: *Block) void {
 	if(item) |_item| {
 		switch(_item) {
 			.baseItem => |baseItem| {
 				if(std.mem.eql(u8, baseItem.id(), "cubyz:chisel")) { // Break only one eigth of a block
-					currentData.data |= closestRay(.bit, currentData.*, relativePlayerPos, playerDir);
+					currentData.data |= segmentToBreak(.bit, currentData.*, pos, relativePlayerPos, playerDir);
 					if(currentData.data == 255) currentData.* = .{.typ = 0, .data = 0};
 					return;
 				}
@@ -299,7 +345,7 @@ pub fn onBlockBreaking(item: ?main.items.Item, relativePlayerPos: Vec3f, playerD
 			else => {},
 		}
 	}
-	return RotationMode.DefaultFunctions.onBlockBreaking(item, relativePlayerPos, playerDir, currentData);
+	return RotationMode.DefaultFunctions.onBlockBreaking(item, pos, relativePlayerPos, playerDir, currentData);
 }
 
 pub fn canBeChangedInto(oldBlock: Block, newBlock: Block, item: main.items.ItemStack, shouldDropSourceBlockOnSuccess: *bool) RotationMode.CanBeChangedInto {

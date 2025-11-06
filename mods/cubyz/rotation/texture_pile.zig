@@ -69,7 +69,7 @@ pub fn generateData(_: *main.game.World, _: Vec3i, _: Vec3f, _: Vec3f, _: Vec3i,
 	return true;
 }
 
-pub fn onBlockBreaking(_: ?main.items.Item, _: Vec3f, _: Vec3f, currentData: *Block) void {
+pub fn onBlockBreaking(_: ?main.items.Item, _: Vec3i, _: Vec3f, _: Vec3f, currentData: *Block) void {
 	if(currentData.data == 0) {
 		currentData.* = .{.typ = 0, .data = 0};
 	} else {

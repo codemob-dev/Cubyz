@@ -930,7 +930,7 @@ pub const MeshSelection = struct { // MARK: MeshSelection
 					if(tag == .fluid and !fluidPlaceable or tag == .air) break :blk; // TODO: Buckets could select fluids
 				}
 				const relativePlayerPos: Vec3f = @floatCast(pos - @as(Vec3d, @floatFromInt(voxelPos)));
-				if(block.mode().rayIntersection(block, item, relativePlayerPos, _dir)) |intersection| {
+				if(block.mode().rayIntersection(block, voxelPos, item, relativePlayerPos, _dir)) |intersection| {
 					if(intersection.distance <= closestDistance) {
 						selectedBlockPos = voxelPos;
 						selectionMin = intersection.min;
@@ -1105,7 +1105,7 @@ pub const MeshSelection = struct { // MARK: MeshSelection
 			}
 
 			var newBlock = block;
-			block.mode().onBlockBreaking(inventory.getStack(slot).item, relPos, lastDir, &newBlock);
+			block.mode().onBlockBreaking(inventory.getStack(slot).item, selectedPos, relPos, lastDir, &newBlock);
 			main.items.Inventory.Sync.ClientSide.mutex.unlock();
 
 			if(newBlock != block) {

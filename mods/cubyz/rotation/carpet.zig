@@ -155,7 +155,7 @@ fn closestRay(comptime typ: enum {bit, intersection}, block: Block, _: ?main.ite
 	for([_]u16{1, 2, 4, 8, 16, 32}) |bit| {
 		if(block.data & bit != 0) {
 			const modelIndex: ModelIndex = blocks.meshes.modelIndexStart(block).add(bit - 1);
-			if(RotationMode.DefaultFunctions.rayModelIntersection(modelIndex, relativePlayerPos, playerDir)) |intersection| {
+			if(RotationMode.DefaultFunctions.rayModelIntersection(modelIndex, undefined, relativePlayerPos, playerDir)) |intersection| {
 				if(result == null or result.?.distance > intersection.distance) {
 					result = intersection;
 					resultBit = bit;
@@ -167,11 +167,11 @@ fn closestRay(comptime typ: enum {bit, intersection}, block: Block, _: ?main.ite
 	return result;
 }
 
-pub fn rayIntersection(block: Block, item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult {
+pub fn rayIntersection(block: Block, _: Vec3i, item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f) ?RayIntersectionResult {
 	return closestRay(.intersection, block, item, relativePlayerPos, playerDir);
 }
 
-pub fn onBlockBreaking(item: ?main.items.Item, relativePlayerPos: Vec3f, playerDir: Vec3f, currentData: *Block) void {
+pub fn onBlockBreaking(item: ?main.items.Item, _: Vec3i, relativePlayerPos: Vec3f, playerDir: Vec3f, currentData: *Block) void {
 	const bit = closestRay(.bit, currentData.*, item, relativePlayerPos, playerDir);
 	currentData.data &= ~bit;
 	if(currentData.data == 0) currentData.typ = 0;
