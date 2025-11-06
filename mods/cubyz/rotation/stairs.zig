@@ -278,20 +278,21 @@ fn segmentToBreak(comptime typ: enum {bit, intersection}, block: Block, pos: Vec
 					.{corner[0], corner[1], 0},
 					.{corner[0], 0, 0},
 					.{0, corner[1], 0},
-					.{corner[0], 0, 0},
+					.{0, 0, corner[2]},
 					.{corner[0], corner[1], corner[2]},
 				};
+				const blockOffsetValues: [7]i32 = .{-1, -1, -1, 2, 2, 2, 0};
 
-				var neighborBlocks: u32 = 0;
-				for(blockOffsets) |offset| {
+				var neighborValueTotal: i32 = 0;
+				for(blockOffsets, blockOffsetValues) |offset, value| {
 					const blockPos = pos + offset;
 					const otherBlock = mesh_storage.getBlockFromRenderThread(blockPos[0], blockPos[1], blockPos[2]) orelse continue;
 					if(otherBlock.collide()) {
-						neighborBlocks += 1;
+						neighborValueTotal += value;
 					}
 				}
 
-				if(neighborBlocks <= 4) {
+				if(neighborValueTotal < 3) {
 					const fullModelIndex: ModelIndex = blocks.meshes.modelIndexStart(block);
 					if(RotationMode.DefaultFunctions.rayModelIntersection(fullModelIndex, pos, relativePlayerPos, playerDir)) |intersection| {
 						result = intersection;
