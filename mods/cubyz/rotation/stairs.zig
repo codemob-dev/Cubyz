@@ -272,27 +272,22 @@ fn segmentToBreak(comptime typ: enum {bit, intersection}, block: Block, pos: Vec
 		if(block.data & bit == 0) {
 			if(main.settings.fancyChisel) {
 				const corner = cornerDir(@intCast(i));
-				const blockOffsets: [7]Vec3i = .{
-					.{0, corner[1], corner[2]},
-					.{corner[0], 0, corner[2]},
-					.{corner[0], corner[1], 0},
+				const blockOffsets: [3]Vec3i = .{
 					.{corner[0], 0, 0},
 					.{0, corner[1], 0},
 					.{0, 0, corner[2]},
-					.{corner[0], corner[1], corner[2]},
 				};
-				const blockOffsetValues: [7]i32 = .{-1, -1, -1, 3, 3, 3, 0};
 
-				var neighborValueTotal: i32 = 0;
-				for(blockOffsets, blockOffsetValues) |offset, value| {
+				var neighborCount: i32 = 0;
+				for(blockOffsets) |offset| {
 					const blockPos = pos + offset;
 					const otherBlock = mesh_storage.getBlockFromRenderThread(blockPos[0], blockPos[1], blockPos[2]) orelse continue;
 					if(otherBlock.collide()) {
-						neighborValueTotal += value;
+						neighborCount += 1;
 					}
 				}
 
-				if(neighborValueTotal < 3) {
+				if(neighborCount < 3) {
 					const fullModelIndex: ModelIndex = blocks.meshes.modelIndexStart(block);
 					if(RotationMode.DefaultFunctions.rayModelIntersection(fullModelIndex, pos, relativePlayerPos, playerDir)) |intersection| {
 						result = intersection;
