@@ -667,6 +667,10 @@ pub const Protocols = struct {
 						const zon = ZonElement.parseFromString(main.stackAllocator, null, reader.remaining);
 						defer zon.deinit(main.stackAllocator);
 						const name = zon.get([]const u8, "name", "unnamed");
+						if(!std.unicode.utf8ValidateSlice(name)) {
+							std.log.err("Received player name with invalid UTF-8 characters.", .{});
+							return error.Invalid;
+						}
 						if(name.len > 500 or main.graphics.TextBuffer.Parser.countVisibleCharacters(name) > 50) {
 							std.log.err("Player has too long name with {}/{} characters.", .{main.graphics.TextBuffer.Parser.countVisibleCharacters(name), name.len});
 							return error.Invalid;
@@ -745,7 +749,13 @@ pub const Protocols = struct {
 			conn.send(.fast, id, data);
 
 			conn.mutex.lock();
-			conn.handShakeWaiting.wait(&conn.mutex);
+			while(true) {
+				conn.handShakeWaiting.timedWait(&conn.mutex, 16_000_000) catch {
+					main.heap.GarbageCollection.syncPoint();
+					continue;
+				};
+				break;
+			}
 			if(conn.connectionState.load(.monotonic) == .disconnectDesired) return error.DisconnectedByServer;
 			conn.mutex.unlock();
 		}
@@ -1042,6 +1052,7 @@ pub const Protocols = struct {
 					main.items.Inventory.Sync.setGamemode(null, try reader.readEnum(main.game.Gamemode));
 				},
 				.teleport => {
+					if(conn.isServerSide()) return error.InvalidPacket;
 					game.Player.setPosBlocking(try reader.readVec(Vec3d));
 				},
 				.worldEditPos => {
@@ -1154,6 +1165,10 @@ pub const Protocols = struct {
 		pub const asynchronous = false;
 		fn receive(conn: *Connection, reader: *utils.BinaryReader) !void {
 			const msg = reader.remaining;
+			if(!std.unicode.utf8ValidateSlice(msg)) {
+				std.log.err("Received chat message with invalid UTF-8 characters.", .{});
+				return error.Invalid;
+			}
 			if(conn.user) |user| {
 				if(msg.len > 10000 or main.graphics.TextBuffer.Parser.countVisibleCharacters(msg) > 1000) {
 					std.log.err("Received too long chat message with {}/{} characters.", .{main.graphics.TextBuffer.Parser.countVisibleCharacters(msg), msg.len});
@@ -1548,7 +1563,10 @@ pub const Connection = struct { // MARK: Connection
 					ProtocolTask.schedule(conn, protocolIndex, self.protocolBuffer.items);
 				} else {
 					var reader = utils.BinaryReader.init(self.protocolBuffer.items);
-					try protocolReceive(conn, &reader);
+					protocolReceive(conn, &reader) catch |err| {
+						std.log.debug("Got error while executing protocol {} with data {any}", .{protocolIndex, self.protocolBuffer.items});
+						return err;
+					};
 				}
 
 				_ = Protocols.bytesReceived[protocolIndex].fetchAdd(self.protocolBuffer.items.len, .monotonic);
@@ -2047,6 +2065,7 @@ pub const Connection = struct { // MARK: Connection
 			if(@errorReturnTrace()) |trace| {
 				std.log.info("{f}", .{trace});
 			}
+			std.log.debug("Packet data: {any}", .{data});
 			self.disconnect();
 		};
 	}
