@@ -66,6 +66,8 @@ pub var developerGPUInfiniteLoopDetection: bool = false;
 
 pub var controllerAxisDeadzone: f32 = 0.0;
 
+pub var speed: f32 = 0.0;
+
 pub var fancyChisel: bool = false;
 
 pub var infiniteReach: bool = false;
