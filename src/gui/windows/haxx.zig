@@ -43,11 +43,6 @@ fn cubeezusCallback(newValue: bool) void {
 	settings.cubeezus = newValue;
 	settings.save();
 }
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c6105f09 (haxxier haxxes)
 fn noDamageCallback(newValue: bool) void {
 	settings.noDamage = newValue;
 	settings.save();
