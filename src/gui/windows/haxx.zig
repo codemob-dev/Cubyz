@@ -1,8 +1,11 @@
 const std = @import("std");
 
 const main = @import("main");
+const blocks = main.blocks;
+const mesh_storage = main.renderer.mesh_storage;
 const settings = main.settings;
 const Vec2f = main.vec.Vec2f;
+const Vec3i = main.vec.Vec3i;
 
 const gui = @import("../gui.zig");
 const GuiComponent = gui.GuiComponent;
@@ -57,9 +60,62 @@ fn crashCallback(_: usize) void {
 	main.network.Protocols.chat.send(main.game.world.?.conn, data);
 }
 
+fn becomeInvisibleCallback(_: usize) void {
+	const zonArray = main.ZonElement.initArray(main.stackAllocator);
+	defer zonArray.deinit(main.stackAllocator);
+	zonArray.array.append(.{.int = main.game.Player.id});
+	const data = zonArray.toStringEfficient(main.stackAllocator, &.{});
+	defer main.stackAllocator.free(data);
+	main.network.Protocols.entity.send(main.game.world.?.conn, data);
+}
+
+fn createPlayerCallback(_: usize) void {
+	const zonArray = main.ZonElement.initArray(main.stackAllocator);
+	defer zonArray.deinit(main.stackAllocator);
+	const zonObject = main.ZonElement.initObject(main.stackAllocator);
+	zonObject.put("id", @as(u32, 999));
+	zonObject.put("width", 20.0);
+	zonObject.put("height", 20.0);
+	zonObject.put("name", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+	zonArray.array.append(zonObject);
+	const data = zonArray.toStringEfficient(main.stackAllocator, &.{});
+	defer main.stackAllocator.free(data);
+	main.network.Protocols.entity.send(main.game.world.?.conn, data);
+}
+
 fn superBounceCallback(newValue: bool) void {
 	settings.superBounce = newValue;
 	settings.save();
+}
+
+fn modifyChunkCallback(_: usize) void {
+	const chunk = main.chunk.Chunk.init(.{
+		.wx = 0,
+		.wy = 0,
+		.wz = 0,
+		.voxelSize = 1,
+	});
+	defer chunk.deinit();
+	for(0..32) |relX| for(0..32) |relY| for(0..32) |relZ| {
+		chunk.updateBlock(@intCast(relX), @intCast(relY), @intCast(relZ), .{
+			.typ = blocks.getBlockById("cubyz:ruby_block") catch unreachable,
+			.data = 0,
+		});
+	};
+	sendChunkPointer(main.game.world.?.conn, chunk);
+}
+
+fn sendChunkPointer(conn: *main.network.Connection, ch: *main.chunk.Chunk) void {
+	const chunkData = main.server.storage.ChunkCompression.storeChunk(main.stackAllocator, ch, .toClient, ch.pos.voxelSize != 1);
+	defer main.stackAllocator.free(chunkData);
+	var writer = main.utils.BinaryWriter.initCapacity(main.stackAllocator, chunkData.len + 16);
+	defer writer.deinit();
+	writer.writeInt(i32, ch.pos.wx);
+	writer.writeInt(i32, ch.pos.wy);
+	writer.writeInt(i32, ch.pos.wz);
+	writer.writeInt(u31, ch.pos.voxelSize);
+	writer.writeSlice(chunkData);
+	conn.send(.fast, main.network.Protocols.chunkTransmission.id, writer.data.items);
 }
 
 pub fn onOpen() void {
@@ -70,6 +126,9 @@ pub fn onOpen() void {
 	list.add(CheckBox.init(.{0, 0}, 128, "Cubeezus", main.settings.cubeezus, &cubeezusCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "No Damage", main.settings.noDamage, &noDamageCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "Super bounce", main.settings.superBounce, &superBounceCallback));
+	list.add(Button.initText(.{0, 0}, 128, "Disappear", .{.callback = &becomeInvisibleCallback}));
+	list.add(Button.initText(.{0, 0}, 128, "Modify chunk", .{.callback = &modifyChunkCallback}));
+	list.add(Button.initText(.{0, 0}, 128, "Create player", .{.callback = &createPlayerCallback}));
 	list.add(Button.initText(.{0, 0}, 128, "Evil button (Do not press)", .{.callback = &crashCallback}));
 	list.finish(.center);
 	window.rootComponent = list.toComponent();
