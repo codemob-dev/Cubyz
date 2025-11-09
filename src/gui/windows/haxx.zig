@@ -88,36 +88,6 @@ fn superBounceCallback(newValue: bool) void {
 	settings.save();
 }
 
-fn modifyChunkCallback(_: usize) void {
-	const chunk = main.chunk.Chunk.init(.{
-		.wx = 0,
-		.wy = 0,
-		.wz = 0,
-		.voxelSize = 1,
-	});
-	defer chunk.deinit();
-	for(0..32) |relX| for(0..32) |relY| for(0..32) |relZ| {
-		chunk.updateBlock(@intCast(relX), @intCast(relY), @intCast(relZ), .{
-			.typ = blocks.getBlockById("cubyz:ruby_block") catch unreachable,
-			.data = 0,
-		});
-	};
-	sendChunkPointer(main.game.world.?.conn, chunk);
-}
-
-fn sendChunkPointer(conn: *main.network.Connection, ch: *main.chunk.Chunk) void {
-	const chunkData = main.server.storage.ChunkCompression.storeChunk(main.stackAllocator, ch, .toClient, ch.pos.voxelSize != 1);
-	defer main.stackAllocator.free(chunkData);
-	var writer = main.utils.BinaryWriter.initCapacity(main.stackAllocator, chunkData.len + 16);
-	defer writer.deinit();
-	writer.writeInt(i32, ch.pos.wx);
-	writer.writeInt(i32, ch.pos.wy);
-	writer.writeInt(i32, ch.pos.wz);
-	writer.writeInt(u31, ch.pos.voxelSize);
-	writer.writeSlice(chunkData);
-	conn.send(.fast, main.network.Protocols.chunkTransmission.id, writer.data.items);
-}
-
 pub fn onOpen() void {
 	const list = VerticalList.init(.{padding, 16 + padding}, 300, 16);
 	list.add(ContinuousSlider.init(.{0, 0}, 128, -5.0, 5.0, @log2(settings.speed), &speedCallback, &speedFormatter));
@@ -127,7 +97,6 @@ pub fn onOpen() void {
 	list.add(CheckBox.init(.{0, 0}, 128, "No Damage", main.settings.noDamage, &noDamageCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "Super bounce", main.settings.superBounce, &superBounceCallback));
 	list.add(Button.initText(.{0, 0}, 128, "Disappear", .{.callback = &becomeInvisibleCallback}));
-	list.add(Button.initText(.{0, 0}, 128, "Modify chunk", .{.callback = &modifyChunkCallback}));
 	list.add(Button.initText(.{0, 0}, 128, "Create player", .{.callback = &createPlayerCallback}));
 	list.add(Button.initText(.{0, 0}, 128, "Evil button (Do not press)", .{.callback = &crashCallback}));
 	list.finish(.center);
