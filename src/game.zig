@@ -779,8 +779,6 @@ pub fn pressAcquireSelectedBlock() void {
 }
 
 pub fn flyToggle() void {
-	if(!Player.isCreative()) return;
-
 	const newIsFlying = !Player.isActuallyFlying();
 
 	Player.isFlying.store(newIsFlying, .monotonic);
@@ -788,8 +786,6 @@ pub fn flyToggle() void {
 }
 
 pub fn ghostToggle() void {
-	if(!Player.isCreative()) return;
-
 	const newIsGhost = !Player.isGhost.load(.monotonic);
 
 	Player.isGhost.store(newIsGhost, .monotonic);
@@ -797,8 +793,6 @@ pub fn ghostToggle() void {
 }
 
 pub fn hyperSpeedToggle() void {
-	if(!Player.isCreative()) return;
-
 	Player.hyperSpeed.store(!Player.hyperSpeed.load(.monotonic), .monotonic);
 }
 
