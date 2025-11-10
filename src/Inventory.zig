@@ -79,7 +79,7 @@ pub const Sync = struct { // MARK: Sync
 			commands.pushBack(cmd);
 		}
 
-		fn nextId() InventoryId {
+		pub fn nextId() InventoryId {
 			mutex.lock();
 			defer mutex.unlock();
 			if(freeIdList.popOrNull()) |id| {
@@ -1950,7 +1950,7 @@ pub const Command = struct { // MARK: Command
 	};
 };
 
-const SourceType = enum(u8) {
+pub const SourceType = enum(u8) {
 	alreadyFreed = 0,
 	playerInventory = 1,
 	hand = 3,
@@ -1969,7 +1969,7 @@ pub const Source = union(SourceType) {
 
 const Inventory = @This(); // MARK: Inventory
 
-const TypeEnum = enum(u8) {
+pub const TypeEnum = enum(u8) {
 	normal = 0,
 	creative = 1,
 	crafting = 2,
@@ -1998,7 +1998,6 @@ pub fn init(allocator: NeverFailingAllocator, _size: usize, _type: Type, source:
 }
 
 fn _init(allocator: NeverFailingAllocator, _size: usize, _type: Type, source: Source, side: Side, callbacks: Callbacks) Inventory {
-	if(_type == .workbench) std.debug.assert(_size == 26);
 	const self = Inventory{
 		.type = _type,
 		._items = allocator.alloc(ItemStack, _size),

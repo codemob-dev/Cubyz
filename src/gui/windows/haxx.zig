@@ -6,6 +6,7 @@ const mesh_storage = main.renderer.mesh_storage;
 const settings = main.settings;
 const Vec2f = main.vec.Vec2f;
 const Vec3i = main.vec.Vec3i;
+const Inventory = main.items.Inventory;
 
 const gui = @import("../gui.zig");
 const GuiComponent = gui.GuiComponent;
@@ -88,6 +89,27 @@ fn superBounceCallback(newValue: bool) void {
 	settings.save();
 }
 
+fn setSpawnCallback(newValue: bool) void {
+	settings.setSpawn = newValue;
+	settings.save();
+}
+
+fn crashOpenInventoryCallback(_: usize) void {
+
+	var writer = main.utils.BinaryWriter.init(main.stackAllocator);
+	defer writer.deinit();
+
+	writer.writeEnum(Inventory.Command.PayloadType, Inventory.Command.PayloadType.open);
+
+	writer.writeEnum(Inventory.InventoryId, Inventory.Sync.ClientSide.nextId());
+	writer.writeInt(usize, std.math.maxInt(usize));
+	writer.writeEnum(Inventory.TypeEnum, Inventory.TypeEnum.normal);
+	writer.writeEnum(Inventory.SourceType, Inventory.SourceType.blockInventory);
+	writer.writeVec(Vec3i, .{0, 0, 0});
+
+	main.game.world.?.conn.send(.fast, main.network.Protocols.inventory.id, writer.data.items);
+}
+
 pub fn onOpen() void {
 	const list = VerticalList.init(.{padding, 16 + padding}, 300, 16);
 	list.add(ContinuousSlider.init(.{0, 0}, 128, -5.0, 5.0, @log2(settings.speed), &speedCallback, &speedFormatter));
@@ -96,7 +118,9 @@ pub fn onOpen() void {
 	list.add(CheckBox.init(.{0, 0}, 128, "Cubeezus", main.settings.cubeezus, &cubeezusCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "No Damage", main.settings.noDamage, &noDamageCallback));
 	list.add(CheckBox.init(.{0, 0}, 128, "Super bounce", main.settings.superBounce, &superBounceCallback));
+	list.add(CheckBox.init(.{0, 0}, 128, "Set Spawn", main.settings.setSpawn, &setSpawnCallback));
 	list.add(Button.initText(.{0, 0}, 128, "Disappear", .{.callback = &becomeInvisibleCallback}));
+	list.add(Button.initText(.{0, 0}, 128, "Open Inventory", .{.callback = &crashOpenInventoryCallback}));
 	list.add(Button.initText(.{0, 0}, 128, "Create player", .{.callback = &createPlayerCallback}));
 	list.add(Button.initText(.{0, 0}, 128, "Evil button (Do not press)", .{.callback = &crashCallback}));
 	list.finish(.center);

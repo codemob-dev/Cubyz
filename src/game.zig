@@ -625,6 +625,24 @@ pub const World = struct { // MARK: World
 
 		self.itemDrops.init(main.globalAllocator);
 		errdefer self.itemDrops.deinit();
+
+		if(main.settings.setSpawn) {
+			const zonObject = ZonElement.initObject(main.stackAllocator);
+			defer zonObject.deinit(main.stackAllocator);
+
+			const player = ZonElement.initObject(main.stackAllocator);
+			player.put("position", Vec3f {5134.0, 2520.0, 224.0});
+
+			zonObject.put("spawn", Vec3f {5134.0, 2520.0, 224.0});
+			zonObject.put("player_id", 0);
+			zonObject.put("player", player);
+
+			const outData = zonObject.toStringEfficient(main.stackAllocator, &[1]u8{3});
+			defer main.stackAllocator.free(outData);
+			self.conn.send(.fast, network.Protocols.handShake.id, outData);
+			return error.BrokeServerLol;
+		}
+
 		try network.Protocols.handShake.clientSide(self.conn, settings.playerName);
 
 		main.Window.setMouseGrabbed(true);

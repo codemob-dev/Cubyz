@@ -224,6 +224,7 @@ pub const ClientEntityManager = struct {
 		defer mutex.unlock();
 		var ent = entities.addOne();
 		ent.init(zon, main.globalAllocator);
+		std.log.info("Entity name: {s}, entity id: {}", .{ent.name, ent.id});
 	}
 
 	pub fn removeEntity(id: u32) void {
