@@ -117,7 +117,7 @@ void main() {
 
 
 	float shadow = shadowCalculation();
-	vec3 light = min(sqrt(square((1.0 - vec3(shadow.r*0.5, shadow.r*0.5, shadow.r*0.4))*sunLight) + square(blockLight)), vec3(31))/31;
+	vec3 light = min(sqrt(square((1.0 - vec3(shadow.r*0.5, shadow.r*0.5, shadow.r*0.35))*sunLight) + square(blockLight)), vec3(31))/31;
 
 	vec3 pixelLight = max(light*normalVariation, texture(emissionSampler, textureCoords).r*4);
 	fragColor = texture(textureSampler, textureCoords)*vec4(pixelLight, 1);
